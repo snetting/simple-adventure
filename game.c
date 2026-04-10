@@ -52,7 +52,7 @@ GameObject objects[] = {
     {8, "walkman", "a yellow Sony Sports Walkman. It's waterproof!", 10},
     {9, "floppy", "a 3-inch floppy disk labeled 'Slipstream BBS'.", 4},
     {10, "cube", "a scrambled Rubik's Cube. It's frustrating.", 2},
-    {11, "drive", "an Amstrad DDI-1 external floppy disk drive.", 10},
+    {11, "floppy-drive", "an Amstrad DDI-1 external floppy disk drive.", 10},
     {12, "cassette", "a cassette tape labeled 'Bridge-It'.", 4}
 };
 
@@ -225,7 +225,7 @@ int handle_command(char *input) {
                 printf("You twist the Rubik's Cube. You manage to get one side blue. Good enough.\n");
             } else if (strcmp(arg, "computer") == 0) {
                 if (current_room == 1) { // Bedroom
-                    // BBS Ending items: interface (idx 1), modem (3), floppy (8), drive (10)
+                    // BBS Ending items: interface (idx 1), modem (3), floppy (8), floppy-drive (10)
                     int has_bbs = (objects[1].location == 1 || objects[1].location == INVENTORY) &&
                                   (objects[3].location == 1 || objects[3].location == INVENTORY) &&
                                   (objects[8].location == 1 || objects[8].location == INVENTORY) &&
@@ -235,7 +235,7 @@ int handle_command(char *input) {
                     int has_basic = (objects[11].location == 1 || objects[11].location == INVENTORY);
 
                     if (has_bbs) {
-                        printf("WIN! You connect the RS232 interface, modem, and disk drive.\n");
+                        printf("WIN! You connect the RS232 interface, modem, and floppy disk drive.\n");
                         printf("The green screen flickers to life as you load the Slipstream BBS software from the floppy.\n");
                         printf("BEEP... HISSS... You are now connected to the world!\n");
                         game_won = 1;
@@ -247,7 +247,7 @@ int handle_command(char *input) {
                         game_won = 1;
                     } else {
                         printf("The computer is here, but you have no software to load.\n");
-                        printf("You need either the cassette or the disk drive setup (interface, modem, drive, and floppy).\n");
+                        printf("You need either the cassette or the floppy disk drive setup (interface, modem, floppy-drive, and floppy).\n");
                     }
                 } else {
                     printf("You should probably set this up on your desk in the bedroom.\n");
