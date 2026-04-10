@@ -1,6 +1,7 @@
 /* 
  * A simple adventure game.
  * Refactored for safety and readability.
+ * Now with more 80s flavor and expanded content!
  */
 
 #include <stdio.h>
@@ -29,24 +30,29 @@ typedef struct {
 
 Room rooms[] = {
     {0, "None", "Nothing here.", 0, 0, 0, 0},
-    {1, "Bedroom", "The room is dimly lit. 1980s posters cover the walls.\nYou notice a phone jack above your desk.", 0, 0, 2, 0},
-    {2, "Hallway", "A hallway complete with terrible wallpaper. Embarrassing childhood photos cover the walls.", 1, 5, 3, 4},
-    {3, "Bathroom", "A bathroom. Dead flies cover the window sill.", 2, 0, 0, 0},
-    {4, "Junk Room", "A second bedroom, although currently filled with junk.", 0, 2, 0, 0},
-    {5, "Stairway", "A gloomy stairway with worn carpet and peeling wallpaper.", 0, 0, 6, 2},
-    {6, "Lounge", "The living room, although currently covered in empty beer bottles and pizza boxes.", 5, 7, 0, 8},
-    {7, "Diner", "A dining room. Old electronic equipment is stacked from floor to ceiling.", 0, 0, 0, 6},
-    {8, "Kitchen", "Supposedly a kitchen but you're not sure you'd want to cook here!", 0, 6, 0, 0}
+    {1, "Bedroom", "Dimly lit by a lava lamp. 1980s posters of neon cars cover the walls.\nA phone jack sits above your desk, waiting for a connection.", 0, 0, 2, 0},
+    {2, "Hallway", "Brown wood-paneling and terrible floral wallpaper. \nEmbarrassing childhood photos in brass frames line the walls.", 1, 5, 3, 4},
+    {3, "Bathroom", "The avocado-green suite is a design crime. \nDead flies litter the window sill next to a bottle of Brut.", 2, 0, 0, 0},
+    {4, "Junk Room", "Piles of old magazines and tangled cables. \nIt's a graveyard for obsolete tech and mismatched socks.", 0, 2, 0, 0},
+    {5, "Stairway", "Gloomy stairs with worn orange carpet and peeling wallpaper. \nIt smells faintly of old cigarettes and floor wax.", 0, 0, 6, 2},
+    {6, "Lounge", "A sagging brown sofa faces a chunky CRT television. \nEmpty beer bottles and pizza boxes are scattered like 8bit debris.", 5, 7, 9, 8},
+    {7, "Diner", "A heavy oak table sits under a dusty chandelier. \nOld electronic equipment is stacked from floor to ceiling.", 0, 0, 0, 6},
+    {8, "Kitchen", "Lino flooring and formica cupboards. \nA kettle whistles on the stove, or maybe that's just your tinnitus.", 0, 6, 0, 0},
+    {9, "Backyard", "Overgrown grass and a rusty swing set. \nA wooden shed stands in the corner under a grey sky.", 6, 0, 0, 10},
+    {10, "Shed", "It's dark and smells of creosote and lawnmower oil. \nSpiders have claimed most of the corners here.", 0, 9, 0, 0}
 };
 
 GameObject objects[] = {
-    {1, "computer", "an Amstrad CPC 464.", 1},
-    {2, "rs232c", "an Amstrad RS232 interface.", 4},
-    {3, "monitor", "a green screen monitor.", 1},
-    {4, "modem", "an RS232 modem.", 6},
-    {5, "pizza", "a cold, half eaten pizza.", 6},
-    {6, "teabag", "a mouldy teabag.", 8},
-    {7, "magazine", "a copy of Amstrad Action.", 3}
+    {1, "computer", "an Amstrad CPC 464 with built-in tape deck.", 1},
+    {2, "rs232c", "an Amstrad RS232 interface, looking very professional.", 4},
+    {3, "monitor", "a green screen monitor. Very high-tech.", 1},
+    {4, "modem", "a chunky RS232 modem with big red lights.", 6},
+    {5, "pizza", "a cold, half eaten Hawaiian pizza. Classic.", 6},
+    {6, "teabag", "a mouldy teabag. It looks like a science experiment.", 8},
+    {7, "magazine", "a copy of Amstrad Action. Issue 1!", 3},
+    {8, "walkman", "a yellow Sony Sports Walkman. It's waterproof!", 10},
+    {9, "floppy", "a 3-inch floppy disk. Rare and expensive.", 4},
+    {10, "cube", "a scrambled Rubik's Cube. It's frustrating.", 2}
 };
 
 const int num_rooms = sizeof(rooms) / sizeof(rooms[0]);
@@ -55,6 +61,7 @@ const int num_objects = sizeof(objects) / sizeof(objects[0]);
 int current_room = 1;
 int prev_room = 0;
 int game_won = 0;
+int pizza_eaten = 0;
 
 void print_help() {
     printf("\nAvailable Commands:\n");
@@ -73,24 +80,24 @@ void print_room(int room_id) {
     if (room_id <= 0 || room_id >= num_rooms) return;
     
     Room *r = &rooms[room_id];
-    printf("\nYou are in the %s\n", r->name);
+    printf("\n--- %s ---\n", r->name);
     printf("%s\n", r->description);
     
-    printf("Objects:\n");
+    printf("\nObjects here:\n");
     int found = 0;
     for (int i = 0; i < num_objects; i++) {
         if (objects[i].location == room_id) {
-            printf("  %s\n", objects[i].name);
+            printf("  - %s\n", objects[i].name);
             found = 1;
         }
     }
-    if (!found) printf("  (none)\n");
+    if (!found) printf("  (nothing of interest)\n");
     
-    printf("Exits:\n");
-    if (r->north) printf("  North (%s)\n", rooms[r->north].name);
-    if (r->east)  printf("  East (%s)\n", rooms[r->east].name);
-    if (r->south) printf("  South (%s)\n", rooms[r->south].name);
-    if (r->west)  printf("  West (%s)\n", rooms[r->west].name);
+    printf("\nExits:\n");
+    if (r->north) printf("  North: %s\n", rooms[r->north].name);
+    if (r->east)  printf("  East:  %s\n", rooms[r->east].name);
+    if (r->south) printf("  South: %s\n", rooms[r->south].name);
+    if (r->west)  printf("  West:  %s\n", rooms[r->west].name);
 }
 
 void to_lowercase(char *str) {
@@ -114,20 +121,30 @@ int handle_command(char *input) {
         to_lowercase(arg);
     }
     
+    // Easter Eggs
+    if (strcmp(cmd, "xyzzy") == 0) {
+        printf("A hollow voice says 'Fool'.\n");
+        return current_room;
+    }
+    if (strcmp(cmd, "jump") == 0) {
+        printf("You jump up and down. You look ridiculous.\n");
+        return current_room;
+    }
+    
     Room *r = &rooms[current_room];
     
     if (strcmp(cmd, "n") == 0 || strcmp(cmd, "north") == 0) {
         if (r->north) return r->north;
-        printf("You can't go that way.\n");
+        printf("A wall prevents your progress.\n");
     } else if (strcmp(cmd, "e") == 0 || strcmp(cmd, "east") == 0) {
         if (r->east) return r->east;
         printf("You can't go that way.\n");
     } else if (strcmp(cmd, "s") == 0 || strcmp(cmd, "south") == 0) {
         if (r->south) return r->south;
-        printf("You can't go that way.\n");
+        printf("The path is blocked.\n");
     } else if (strcmp(cmd, "w") == 0 || strcmp(cmd, "west") == 0) {
         if (r->west) return r->west;
-        printf("You can't go that way.\n");
+        printf("You bump into the wallpapered wall.\n");
     } else if (strcmp(cmd, "look") == 0 || strcmp(cmd, "l") == 0) {
         prev_room = 0; // Force redraw
     } else if (strcmp(cmd, "ex") == 0 || strcmp(cmd, "examine") == 0) {
@@ -138,24 +155,24 @@ int handle_command(char *input) {
             for (int i = 0; i < num_objects; i++) {
                 if (strcmp(arg, objects[i].name) == 0) {
                     if (objects[i].location == current_room || objects[i].location == INVENTORY) {
-                        printf("\nYou examine the %s.\nIt's %s\n", objects[i].name, objects[i].description);
+                        printf("\n%s\nIt's %s\n", objects[i].name, objects[i].description);
                         found = 1;
                         break;
                     }
                 }
             }
-            if (!found) printf("The %s is not here.\n", arg);
+            if (!found) printf("You don't see that here.\n");
         }
     } else if (strcmp(cmd, "inv") == 0 || strcmp(cmd, "inventory") == 0 || strcmp(cmd, "i") == 0) {
-        printf("Inventory:\n");
+        printf("\nYou are carrying:\n");
         int found = 0;
         for (int i = 0; i < num_objects; i++) {
             if (objects[i].location == INVENTORY) {
-                printf("  %s: %s\n", objects[i].name, objects[i].description);
+                printf("  - %s\n", objects[i].name);
                 found = 1;
             }
         }
-        if (!found) printf("  (empty)\n");
+        if (!found) printf("  Nothing. Your pockets are empty.\n");
     } else if (strcmp(cmd, "take") == 0 || strcmp(cmd, "t") == 0) {
         if (arg[0] == '\0') {
             printf("Take what?\n");
@@ -165,13 +182,13 @@ int handle_command(char *input) {
                 if (strcmp(arg, objects[i].name) == 0) {
                     if (objects[i].location == current_room) {
                         objects[i].location = INVENTORY;
-                        printf("You take the %s.\n", objects[i].name);
+                        printf("You pick up the %s.\n", objects[i].name);
                         found = 1;
                         break;
                     }
                 }
             }
-            if (!found) printf("The %s is not here.\n", arg);
+            if (!found) printf("The %s isn't here to take.\n", arg);
         }
     } else if (strcmp(cmd, "drop") == 0 || strcmp(cmd, "d") == 0) {
         if (arg[0] == '\0') {
@@ -182,50 +199,81 @@ int handle_command(char *input) {
                 if (strcmp(arg, objects[i].name) == 0) {
                     if (objects[i].location == INVENTORY) {
                         objects[i].location = current_room;
-                        printf("You drop the %s.\n", objects[i].name);
+                        printf("You drop the %s on the floor.\n", objects[i].name);
                         found = 1;
                         break;
                     }
                 }
             }
-            if (!found) printf("You don't have that.\n");
+            if (!found) printf("You aren't carrying that.\n");
         }
     } else if (strcmp(cmd, "use") == 0 || strcmp(cmd, "u") == 0) {
         if (arg[0] == '\0') {
             printf("Use what?\n");
-        } else if (strcmp(arg, "teabag") == 0) {
-            printf("You poke the mouldy teabag.\n");
-        } else if (strcmp(arg, "magazine") == 0) {
-            printf("You read the magazine. Some time passes.\n");
-        } else if (strcmp(arg, "computer") == 0) {
-            if (current_room == 1) { // Bedroom
-                int score = 0;
-                printf("You connect the following: ");
-                for (int i = 0; i < 4; i++) { // computer, rs232c, monitor, modem
-                    if (objects[i].location == 1) {
-                        printf("%s ", objects[i].name);
-                        score++;
+        } else {
+            int has_obj = 0;
+            int obj_idx = -1;
+            for (int i = 0; i < num_objects; i++) {
+                if (strcmp(arg, objects[i].name) == 0) {
+                    if (objects[i].location == current_room || objects[i].location == INVENTORY) {
+                        has_obj = 1;
+                        obj_idx = i;
+                        break;
                     }
                 }
-                printf("\n");
-                if (score == 4) {
-                    printf("Win! You have set up your Amstrad and are now ready for some 8-bit fun!\n");
-                    game_won = 1;
+            }
+            
+            if (!has_obj) {
+                printf("You don't have the %s.\n", arg);
+            } else if (strcmp(arg, "teabag") == 0) {
+                printf("You poke the mouldy teabag. It squishes unpleasantly. Gross.\n");
+            } else if (strcmp(arg, "magazine") == 0) {
+                printf("You flip through the pages. The tips and tricks for 'Manic Miner' look useful.\n");
+            } else if (strcmp(arg, "pizza") == 0) {
+                if (!pizza_eaten) {
+                    printf("You eat the cold pizza. It's rubbery but strangely nostalgic. You feel energized!\n");
+                    pizza_eaten = 1;
+                    objects[obj_idx].location = 0; // Remove from game
                 } else {
-                    printf("You try to use the computer but something appears to be missing.\n");
+                    printf("The pizza is already gone. Only crumbs remain.\n");
+                }
+            } else if (strcmp(arg, "walkman") == 0) {
+                printf("You put on the headphones. Synth-pop fills your ears. Radical!\n");
+            } else if (strcmp(arg, "cube") == 0) {
+                printf("You twist the Rubik's Cube for a while. You manage to get one side blue. Good enough.\n");
+            } else if (strcmp(arg, "computer") == 0) {
+                if (current_room == 1) { // Bedroom
+                    int score = 0;
+                    printf("You connect the following components: ");
+                    // Check for computer, rs232c, monitor, modem
+                    int needed[] = {0, 1, 2, 3}; 
+                    for (int i = 0; i < 4; i++) {
+                        if (objects[needed[i]].location == 1) {
+                            printf("%s ", objects[needed[i]].name);
+                            score++;
+                        }
+                    }
+                    printf("\n");
+                    if (score == 4) {
+                        printf("WIN! The green screen flickers to life. READY. \nYou spend the rest of the night coding in BASIC.\n");
+                        game_won = 1;
+                    } else {
+                        printf("The computer won't boot. You're still missing some peripherals.\n");
+                    }
+                } else {
+                    printf("You should probably set this up on your desk in the bedroom.\n");
                 }
             } else {
-                printf("You need to be in your bedroom to set up the computer properly.\n");
+                printf("You're not sure how to use the %s right now.\n", arg);
             }
-        } else {
-            printf("You can't use that here.\n");
         }
     } else if (strcmp(cmd, "help") == 0 || strcmp(cmd, "h") == 0) {
         print_help();
     } else if (strcmp(cmd, "quit") == 0 || strcmp(cmd, "q") == 0) {
+        printf("Goodbye! Thanks for playing.\n");
         exit(0);
     } else {
-        printf("I don't understand '%s'. Type 'help' for a list of commands.\n", cmd);
+        printf("I don't understand '%s'. Try 'help'.\n", cmd);
     }
     
     return current_room;
@@ -234,7 +282,10 @@ int handle_command(char *input) {
 int main() {
     char input[MAX_COMMAND];
 
-    printf("\n\nWelcome to a simple adventure.\n\n");
+    printf("\n========================================\n");
+    printf("   RETRO ADVENTURE: THE AMSTRAD QUEST   \n");
+    printf("========================================\n\n");
+    printf("It's 1986. You need to get your computer set up.\n");
     print_help();
 
     while (!game_won) {
@@ -243,14 +294,14 @@ int main() {
             prev_room = current_room;
         }
         
-        printf("\nCommand: ");
+        printf("\n> ");
         if (!fgets(input, sizeof(input), stdin)) break;
         
         current_room = handle_command(input);
     }
 
     if (game_won) {
-        printf("\nCongratulations! You've won the game!\n");
+        printf("\nCongratulations! You've conquered the 80s!\n");
     }
 
     return 0;
