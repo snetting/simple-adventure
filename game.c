@@ -56,6 +56,19 @@ int current_room = 1;
 int prev_room = 0;
 int game_won = 0;
 
+void print_help() {
+    printf("\nAvailable Commands:\n");
+    printf("  north (n), east (e), south (s), west (w)  - Move in a direction\n");
+    printf("  examine (ex) [object]                    - Examine an object\n");
+    printf("  take (t) [object]                       - Pick up an object\n");
+    printf("  drop (d) [object]                       - Put down an object\n");
+    printf("  use (u) [object]                        - Use an object\n");
+    printf("  inventory (inv, i)                      - Show what you are carrying\n");
+    printf("  look (l)                                - Look around the current room\n");
+    printf("  help (h)                                - Show this help list\n");
+    printf("  quit (q)                                - Exit the game\n");
+}
+
 void print_room(int room_id) {
     if (room_id <= 0 || room_id >= num_rooms) return;
     
@@ -103,21 +116,21 @@ int handle_command(char *input) {
     
     Room *r = &rooms[current_room];
     
-    if (strcmp(cmd, "n") == 0) {
+    if (strcmp(cmd, "n") == 0 || strcmp(cmd, "north") == 0) {
         if (r->north) return r->north;
         printf("You can't go that way.\n");
-    } else if (strcmp(cmd, "e") == 0) {
+    } else if (strcmp(cmd, "e") == 0 || strcmp(cmd, "east") == 0) {
         if (r->east) return r->east;
         printf("You can't go that way.\n");
-    } else if (strcmp(cmd, "s") == 0) {
+    } else if (strcmp(cmd, "s") == 0 || strcmp(cmd, "south") == 0) {
         if (r->south) return r->south;
         printf("You can't go that way.\n");
-    } else if (strcmp(cmd, "w") == 0) {
+    } else if (strcmp(cmd, "w") == 0 || strcmp(cmd, "west") == 0) {
         if (r->west) return r->west;
         printf("You can't go that way.\n");
-    } else if (strcmp(cmd, "look") == 0) {
+    } else if (strcmp(cmd, "look") == 0 || strcmp(cmd, "l") == 0) {
         prev_room = 0; // Force redraw
-    } else if (strcmp(cmd, "ex") == 0) {
+    } else if (strcmp(cmd, "ex") == 0 || strcmp(cmd, "examine") == 0) {
         if (arg[0] == '\0') {
             printf("Examine what?\n");
         } else {
@@ -133,7 +146,7 @@ int handle_command(char *input) {
             }
             if (!found) printf("The %s is not here.\n", arg);
         }
-    } else if (strcmp(cmd, "inv") == 0) {
+    } else if (strcmp(cmd, "inv") == 0 || strcmp(cmd, "inventory") == 0 || strcmp(cmd, "i") == 0) {
         printf("Inventory:\n");
         int found = 0;
         for (int i = 0; i < num_objects; i++) {
@@ -143,7 +156,7 @@ int handle_command(char *input) {
             }
         }
         if (!found) printf("  (empty)\n");
-    } else if (strcmp(cmd, "take") == 0) {
+    } else if (strcmp(cmd, "take") == 0 || strcmp(cmd, "t") == 0) {
         if (arg[0] == '\0') {
             printf("Take what?\n");
         } else {
@@ -160,7 +173,7 @@ int handle_command(char *input) {
             }
             if (!found) printf("The %s is not here.\n", arg);
         }
-    } else if (strcmp(cmd, "drop") == 0) {
+    } else if (strcmp(cmd, "drop") == 0 || strcmp(cmd, "d") == 0) {
         if (arg[0] == '\0') {
             printf("Drop what?\n");
         } else {
@@ -177,7 +190,7 @@ int handle_command(char *input) {
             }
             if (!found) printf("You don't have that.\n");
         }
-    } else if (strcmp(cmd, "use") == 0) {
+    } else if (strcmp(cmd, "use") == 0 || strcmp(cmd, "u") == 0) {
         if (arg[0] == '\0') {
             printf("Use what?\n");
         } else if (strcmp(arg, "teabag") == 0) {
@@ -207,10 +220,12 @@ int handle_command(char *input) {
         } else {
             printf("You can't use that here.\n");
         }
-    } else if (strcmp(cmd, "quit") == 0) {
+    } else if (strcmp(cmd, "help") == 0 || strcmp(cmd, "h") == 0) {
+        print_help();
+    } else if (strcmp(cmd, "quit") == 0 || strcmp(cmd, "q") == 0) {
         exit(0);
     } else {
-        printf("I don't understand '%s'.\n", cmd);
+        printf("I don't understand '%s'. Type 'help' for a list of commands.\n", cmd);
     }
     
     return current_room;
@@ -220,7 +235,7 @@ int main() {
     char input[MAX_COMMAND];
 
     printf("\n\nWelcome to a simple adventure.\n\n");
-    printf("Commands: n, e, s, w, ex [obj], take [obj], drop [obj], use [obj], look, inv, quit\n\n");
+    print_help();
 
     while (!game_won) {
         if (prev_room != current_room) {
