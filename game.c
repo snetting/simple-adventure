@@ -1,7 +1,6 @@
 /* 
  * A simple adventure game.
- * Refactored for safety and readability.
- * Now with more 80s flavor and expanded content!
+ * Now with branching endings and corrected inventory logic!
  */
 
 #include <stdio.h>
@@ -11,7 +10,7 @@
 
 #define MAX_COMMAND 64
 #define MAX_INPUT 32
-#define INVENTORY 9
+#define INVENTORY 100
 #define INVALID_EXIT 0
 
 typedef struct {
@@ -44,15 +43,17 @@ Room rooms[] = {
 
 GameObject objects[] = {
     {1, "computer", "an Amstrad CPC 464 with built-in tape deck.", 1},
-    {2, "rs232c", "an Amstrad RS232 interface, looking very professional.", 4},
-    {3, "monitor", "a green screen monitor. Very high-tech.", 1},
-    {4, "modem", "a chunky RS232 modem with big red lights.", 6},
+    {2, "rs232c-interface", "an Amstrad RS232 interface. It plugs into the back of the CPC.", 4},
+    {3, "monitor", "a green screen monitor. It's heavy and boxy.", 1},
+    {4, "modem", "a chunky RS232 modem with big red lights and a phone cable.", 6},
     {5, "pizza", "a cold, half eaten Hawaiian pizza. Classic.", 6},
     {6, "teabag", "a mouldy teabag. It looks like a science experiment.", 8},
     {7, "magazine", "a copy of Amstrad Action. Issue 1!", 3},
     {8, "walkman", "a yellow Sony Sports Walkman. It's waterproof!", 10},
-    {9, "floppy", "a 3-inch floppy disk. Rare and expensive.", 4},
-    {10, "cube", "a scrambled Rubik's Cube. It's frustrating.", 2}
+    {9, "floppy", "a 3-inch floppy disk labeled 'Slipstream BBS'.", 4},
+    {10, "cube", "a scrambled Rubik's Cube. It's frustrating.", 2},
+    {11, "drive", "an Amstrad DDI-1 external floppy disk drive.", 10},
+    {12, "cassette", "a cassette tape labeled 'Bridge-It'.", 4}
 };
 
 const int num_rooms = sizeof(rooms) / sizeof(rooms[0]);
@@ -74,6 +75,13 @@ void print_help() {
     printf("  look (l)                                - Look around the current room\n");
     printf("  help (h)                                - Show this help list\n");
     printf("  quit (q)                                - Exit the game\n");
+}
+
+int get_object_index(const char *name) {
+    for (int i = 0; i < num_objects; i++) {
+        if (strcmp(name, objects[i].name) == 0) return i;
+    }
+    return -1;
 }
 
 void print_room(int room_id) {
@@ -151,17 +159,12 @@ int handle_command(char *input) {
         if (arg[0] == '\0') {
             printf("Examine what?\n");
         } else {
-            int found = 0;
-            for (int i = 0; i < num_objects; i++) {
-                if (strcmp(arg, objects[i].name) == 0) {
-                    if (objects[i].location == current_room || objects[i].location == INVENTORY) {
-                        printf("\n%s\nIt's %s\n", objects[i].name, objects[i].description);
-                        found = 1;
-                        break;
-                    }
-                }
+            int idx = get_object_index(arg);
+            if (idx != -1 && (objects[idx].location == current_room || objects[idx].location == INVENTORY)) {
+                printf("\n%s\nIt's %s\n", objects[idx].name, objects[idx].description);
+            } else {
+                printf("You don't see that here.\n");
             }
-            if (!found) printf("You don't see that here.\n");
         }
     } else if (strcmp(cmd, "inv") == 0 || strcmp(cmd, "inventory") == 0 || strcmp(cmd, "i") == 0) {
         printf("\nYou are carrying:\n");
@@ -177,53 +180,32 @@ int handle_command(char *input) {
         if (arg[0] == '\0') {
             printf("Take what?\n");
         } else {
-            int found = 0;
-            for (int i = 0; i < num_objects; i++) {
-                if (strcmp(arg, objects[i].name) == 0) {
-                    if (objects[i].location == current_room) {
-                        objects[i].location = INVENTORY;
-                        printf("You pick up the %s.\n", objects[i].name);
-                        found = 1;
-                        break;
-                    }
-                }
+            int idx = get_object_index(arg);
+            if (idx != -1 && objects[idx].location == current_room) {
+                objects[idx].location = INVENTORY;
+                printf("You pick up the %s.\n", objects[idx].name);
+            } else {
+                printf("The %s isn't here to take.\n", arg);
             }
-            if (!found) printf("The %s isn't here to take.\n", arg);
         }
     } else if (strcmp(cmd, "drop") == 0 || strcmp(cmd, "d") == 0) {
         if (arg[0] == '\0') {
             printf("Drop what?\n");
         } else {
-            int found = 0;
-            for (int i = 0; i < num_objects; i++) {
-                if (strcmp(arg, objects[i].name) == 0) {
-                    if (objects[i].location == INVENTORY) {
-                        objects[i].location = current_room;
-                        printf("You drop the %s on the floor.\n", objects[i].name);
-                        found = 1;
-                        break;
-                    }
-                }
+            int idx = get_object_index(arg);
+            if (idx != -1 && objects[idx].location == INVENTORY) {
+                objects[idx].location = current_room;
+                printf("You dropped the %s.\n", objects[idx].name);
+            } else {
+                printf("You aren't carrying that.\n");
             }
-            if (!found) printf("You aren't carrying that.\n");
         }
     } else if (strcmp(cmd, "use") == 0 || strcmp(cmd, "u") == 0) {
         if (arg[0] == '\0') {
             printf("Use what?\n");
         } else {
-            int has_obj = 0;
-            int obj_idx = -1;
-            for (int i = 0; i < num_objects; i++) {
-                if (strcmp(arg, objects[i].name) == 0) {
-                    if (objects[i].location == current_room || objects[i].location == INVENTORY) {
-                        has_obj = 1;
-                        obj_idx = i;
-                        break;
-                    }
-                }
-            }
-            
-            if (!has_obj) {
+            int idx = get_object_index(arg);
+            if (idx == -1 || (objects[idx].location != current_room && objects[idx].location != INVENTORY)) {
                 printf("You don't have the %s.\n", arg);
             } else if (strcmp(arg, "teabag") == 0) {
                 printf("You poke the mouldy teabag. It squishes unpleasantly. Gross.\n");
@@ -233,32 +215,39 @@ int handle_command(char *input) {
                 if (!pizza_eaten) {
                     printf("You eat the cold pizza. It's rubbery but strangely nostalgic. You feel energized!\n");
                     pizza_eaten = 1;
-                    objects[obj_idx].location = 0; // Remove from game
+                    objects[idx].location = 0; // Remove from game
                 } else {
-                    printf("The pizza is already gone. Only crumbs remain.\n");
+                    printf("The pizza is already gone.\n");
                 }
             } else if (strcmp(arg, "walkman") == 0) {
                 printf("You put on the headphones. Synth-pop fills your ears. Radical!\n");
             } else if (strcmp(arg, "cube") == 0) {
-                printf("You twist the Rubik's Cube for a while. You manage to get one side blue. Good enough.\n");
+                printf("You twist the Rubik's Cube. You manage to get one side blue. Good enough.\n");
             } else if (strcmp(arg, "computer") == 0) {
                 if (current_room == 1) { // Bedroom
-                    int score = 0;
-                    printf("You connect the following components: ");
-                    // Check for computer, rs232c, monitor, modem
-                    int needed[] = {0, 1, 2, 3}; 
-                    for (int i = 0; i < 4; i++) {
-                        if (objects[needed[i]].location == 1) {
-                            printf("%s ", objects[needed[i]].name);
-                            score++;
-                        }
-                    }
-                    printf("\n");
-                    if (score == 4) {
-                        printf("WIN! The green screen flickers to life. READY. \nYou spend the rest of the night coding in BASIC.\n");
+                    // BBS Ending items: interface (idx 1), modem (3), floppy (8), drive (10)
+                    int has_bbs = (objects[1].location == 1 || objects[1].location == INVENTORY) &&
+                                  (objects[3].location == 1 || objects[3].location == INVENTORY) &&
+                                  (objects[8].location == 1 || objects[8].location == INVENTORY) &&
+                                  (objects[10].location == 1 || objects[10].location == INVENTORY);
+                    
+                    // BASIC Ending items: cassette (idx 11)
+                    int has_basic = (objects[11].location == 1 || objects[11].location == INVENTORY);
+
+                    if (has_bbs) {
+                        printf("WIN! You connect the RS232 interface, modem, and disk drive.\n");
+                        printf("The green screen flickers to life as you load the Slipstream BBS software from the floppy.\n");
+                        printf("BEEP... HISSS... You are now connected to the world!\n");
+                        game_won = 1;
+                    } 
+                    else if (has_basic) {
+                        printf("WIN! You load the cassette into the built-in deck.\n");
+                        printf("The green screen flickers to life. READY.\n");
+                        printf("You spend the rest of the night coding in BASIC.\n");
                         game_won = 1;
                     } else {
-                        printf("The computer won't boot. You're still missing some peripherals.\n");
+                        printf("The computer is here, but you have no software to load.\n");
+                        printf("You need either the cassette or the disk drive setup (interface, modem, drive, and floppy).\n");
                     }
                 } else {
                     printf("You should probably set this up on your desk in the bedroom.\n");
